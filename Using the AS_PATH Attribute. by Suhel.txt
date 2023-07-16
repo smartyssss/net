@@ -1,0 +1,111 @@
+    gyyjnjnjnjnjnjnnhh
+n
+Step 1
+
+conf t
+hostname Andheri
+interface loopback 0
+ip address 10.1.1.1 255.255.255.0
+exit
+
+
+interface loopback 0
+ip address 10.2.2.1 255.255.255.0
+
+interface s2/0
+ip address 192.168.1.6 255.255.255.252
+no sh
+exit
+
+ip address 192.168.1.6 255.255.255.252
+no sh
+exit
+interface s2/1
+ip address 172.24.1.17 255.255.255.252
+no sh
+end
+
+
+
+conf t
+hostname Churchgate
+interface loopback 0
+ip address 10.3.3.1 255.255.255.0
+exit
+
+interface s2/1
+
+ip address 172.24.1.18 255.255.255.252
+no sh
+
+
+ping 192.168.1.5
+
+
+ping 172.24.1.18
+
+
+Step 2
+
+router bgp 100
+neighbor 192.168.1.6 remote-as 300
+network 10.1.1.0 mask 255.255.255.0
+
+
+router bgp 300
+neighbor 192.168.1.5 remote-as 100
+neighbor 172.24.1.18 remote-as 65000
+network 10.2.2.0 mask 255.255.255.0
+
+
+router bgp 65000
+Churchgate(config-router)neighbor 172.24.1.17 remote-as 300
+Churchgate(config-router)network 10.3.3.0 mask 255.255.255.0
+Churchgate(config-router)end
+
+sh ip bgp neighbors
+
+
+Step-4 Remove the private As
+
+sh ip route
+
+ping 10.3.3.1 source 10.1.1.1
+
+sh ip bgp
+
+Step-5 Use the As_Path attribute to filter routes
+
+router bgp 300
+
+neighbor 192.168.1.5 remove-private-as
+route
+exit
+
+router bgp 300
+
+neighbor 172.24.1.18 filter-list 1 out
+exit
+
+end
+wr
+
+
+
+sh ip bgp regexp ^100$
+
+
+foreach address {
++>10.1.1.1
++>10.2.2.1
++>10.3.3.1
++>192.168.1.5
++>192.168.1.6
++>172.24.1.17
++>172.24.1.18
++>} { ping $address }
+
+
+
+
+

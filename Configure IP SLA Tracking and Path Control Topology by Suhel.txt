@@ -1,0 +1,114 @@
+Router 1
+
+conf t
+hostname R1
+interface Loopback 0
+description R1 LAN
+ip address 192.168.1.1 255.255.255.0
+exit
+interface Serial2/0
+description R1 --> ISP1
+ip address 209.165.201.2 255.255.255.252
+clock rate 128000
+bandwidth 128
+no shutdown
+exit
+interface Serial2/2
+description R1 --> ISP2
+ip address 209.165.202.130 255.255.255.252
+bandwidth 128
+no shutdown
+
+Router 2
+
+conf t
+hostname ISP1
+interface Loopback0
+description Simulated Internet Web Server
+ip address 209.165.200.254 255.255.255.255
+exit
+interface Loopback1
+description ISP1 DNS Server
+ip address 209.165.201.30 255.255.255.255
+exit
+interface Serial2/0
+description ISP1 --> R1
+ip address 209.165.201.1 255.255.255.252
+bandwidth 128
+no shutdown
+exit
+interface Serial2/1
+description ISP1 --> ISP2
+ip address 209.165.200.225 255.255.255.252
+clock rate 128000
+bandwidth 128
+no shutdown
+
+Router 3
+
+conf t
+hostname ISP2
+interface Loopback0
+description Simulated Internet Web Server
+ip address 209.165.200.254 255.255.255.255
+interface Loopback1
+description ISP2 DNS Server
+ip address 209.165.202.158
+interface Serial2/2
+255.255.255.255
+description ISP2 --> R1
+ip address 209.165.202.129 255.255.255.252
+clock rate 128000
+bandwidth 128
+no shutdown
+interface Serial2/1
+description ISP2 --> ISP1
+ip address 209.165.200.226 255.255.255.252
+bandwidth 128
+no shutdown
+
+
+show interfaces description | include up
+
+router 1
+conf t
+ip route 0.0.0.0 0.0.0.0 209.165.201.1
+
+router 2
+
+conf t
+router eigrp 1
+network 209.165.200.224 0.0.0.3
+network 209.165.201.0 0.0.0.3
+no auto-summary
+exit
+ip route 192.168.1.0 255.255.255.0 209.165.201.2
+
+router 3
+conf t
+router eigrp 1
+network 209.165.200.224 0.0.0.3
+network 209.165.202.128 0.0.0.3
+no auto-summary
+exit
+ip route 192.168.1.0 255.255.255.0 209.165.202.130
+
+router 1
+tclsh
+foreach address {
+209.165.200.254
+209.165.201.130
+209.165.202.158
+} {
+ping $address source 192.168.1.1
+}
+
+
+
+foreach address {
+209.165.200.254
+209.165.201.130
+209.165.202.158
+} {
+trace $address source 192.168.1.1
+}
