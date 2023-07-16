@@ -1,0 +1,136 @@
+enable
+conf t
+hostname ISP
+interface Loopback0
+ip address 192.168.100.1 255.255.255.0
+exit
+interface Serial0/0
+ip address 192.168.1.5 255.255.255.252
+no shutdown
+exit 
+interface Serial0/1
+ip address 192.168.1.1 255.255.255.252 
+no shutdown
+exit 
+router bgp 200
+network 192.168.100.0
+neighbor 192.168.1.6 remote-as 64512
+neighbor 192.168.1.2 remote-as 64512 
+exit
+do sh ip bgp
+router bgp 200
+network 192.168.1.0 mask 255.255.255.252
+network 192.168.1.4 mask 255.255.255.252
+exit
+do sh ip bgp
+exit
+ping 172.16.1.1
+ping 172.16.1.2
+traceroute 172.16.1.1
+traceroute 172.16.1.2 
+
+===========================
+
+enable 
+conf t
+hostname SanJose1
+interface Loopback0
+ip address 172.16.64.1 255.255.255.0
+ip address 172.16.64.1 255.255.255.0
+exit
+interface Serial0/0
+ip address 192.168.1.6 255.255.255.252 
+no shutdown
+exit 
+interface Serial0/1
+ip address 172.16.1.1 255.255.255.0 
+no shutdown
+exit 
+router eigrp 64512
+network 172.16.0.0 
+no auto-summary 
+exit 
+router bgp 64512
+neighbor 172.16.32.1 remote-as 64512 
+neighbor 172.16.32.1 update-source loopback0
+exit
+ip route 172.16.0.0 255.255.0.0 null 0
+router bgp 64512
+network 172.16.0.0
+neighbor 192.168.1.5 remote-as 200 
+exit
+router bgp 64512
+neighbor 172.16.32.1 next-hop-self 
+exit
+do sh ip bgp
+route-map PRIMARY_T1_IN permit 10 
+set local-preference 160 
+exit 
+router bgp 64512
+neighbor 192.168.1.5 route-map PRIMARY_T1_IN in 
+exit
+clear ip bgp * soft 
+do sh ip bgp
+route-map PRIMARY_T1_MED_OUT permit 10 
+set Metric 50
+exit 
+router bgp 64512
+neighbor 192.168.1.5 route-map PRIMARY_T1_MED_OUT out
+exit 
+exit 
+clear ip bgp * soft
+do sh ip bgp
+do sh ip route
+ping 192.168.1.2
+traceroute 192.168.1.1
+
+===========================
+
+en
+conf t
+hostname SanJose2
+interface Loopback0
+ip address 172.16.32.1 255.255.255.0
+exit
+interface Serial0/0
+ip address 192.168.1.2 255.255.255.252
+no shutdown
+exit 
+interface Serial0/1
+ip address 172.16.1.2 255.255.255.0 
+no shutdown
+exit 
+router eigrp 64512
+network 172.16.0.0 
+no auto-summary 
+exit 
+router bgp 64512
+neighbor 172.16.64.1 remote-as 64512 
+neighbor 172.16.64.1 update-source loopback0
+exit
+ip route 172.16.0.0 255.255.0.0 null 0
+router bgp 64512
+network 172.16.0.0
+neighbor 192.168.1.1 remote-as 200 
+exit
+do sh ip bgp summary
+router bgp 64512
+neighbor 172.16.64.1 next-hop-self 
+exit
+do sh ip bgp
+route-map SECONDARY_T1_IN permit 10
+set local-preference 125 
+exit
+router bgp 64512
+neighbor 192.168.1.1 route-map SECONDARY_T1_IN in 
+exit
+clear ip bgp * soft 
+do sh ip bgp
+route-map SECONDARY_T1_MED_OUT permit 10 
+set Metric 75
+exit 
+router bgp 64512
+neighbor 192.168.1.1 route-map SECONDARY_T1_MED_OUT out 
+end
+clear ip bgp * soft 
+do sh ip bgp
